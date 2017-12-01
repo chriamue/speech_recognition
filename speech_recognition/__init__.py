@@ -1201,7 +1201,7 @@ class Recognizer(AudioSource):
                     transcription.append(hypothesis["transcript"])
         return "\n".join(transcription)
 
-    def recognize_tensorflow(self, audio_data, tensor_graph='tensorflow-data/conv_actions_frozen.pb', tensor_label='tensorflow-data/conv_actions_labels.txt'):
+    def recognize_deepspeech(self, audio_data, tensor_graph='deepspeech-data/conv_actions_frozen.pb', tensor_label='deepspeech-data/conv_actions_labels.txt'):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance).
         Path to Tensor loaded from ``tensor_graph``. You can download a model here: http://download.tensorflow.org/models/speech_commands_v0.01.zip
@@ -1220,16 +1220,16 @@ class Recognizer(AudioSource):
 
         try:
             from deepspeech.model import Model
+            import numpy as np
         except ImportError:
-            raise RequestError("missing deepspeech module: ensure that tensorflow is set up correctly.")
+            raise RequestError("missing deepspeech module: ensure that deepspeech is set up correctly.")
 
-        audiodata = audio_data.get_raw_data(
+        raw_data = audio_data.get_raw_data(
             convert_rate=16000, convert_width=2
         )
-        # load model
+        audiodata = np.frombuffer(raw_data, dtype=np.int16, count=-1)
         ds = Model(tensor_graph, N_FEATURES, N_CONTEXT, tensor_label, BEAM_WIDTH)
-        fs = 16000
-        print(ds.stt(audiodata, fs))
+        return ds.stt(audiodata, 16000)
 
 
 def get_flac_converter():
