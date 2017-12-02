@@ -1201,7 +1201,10 @@ class Recognizer(AudioSource):
                     transcription.append(hypothesis["transcript"])
         return "\n".join(transcription)
 
-    def recognize_deepspeech(self, audio_data, tensor_graph='deepspeech-data/conv_actions_frozen.pb', tensor_label='deepspeech-data/conv_actions_labels.txt'):
+    lastdsmodel = ''
+    ds = None
+
+    def recognize_deepspeech(self, audio_data, tensor_graph='deepspeech-data/output_graph.pb', tensor_label='deepspeech-data/alphabet.txt'):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance).
         Path to Tensor loaded from ``tensor_graph``. You can download a model here: http://download.tensorflow.org/models/speech_commands_v0.01.zip
@@ -1224,13 +1227,16 @@ class Recognizer(AudioSource):
         except ImportError:
             raise RequestError("missing deepspeech module: ensure that deepspeech is set up correctly.")
 
+        if not (tensor_graph == self.lastdsmodel):
+            self.lastdsmodel = tensor_graph
+            self.ds = Model(tensor_graph, N_FEATURES, N_CONTEXT, tensor_label, BEAM_WIDTH)
+
         raw_data = audio_data.get_raw_data(
             convert_rate=16000, convert_width=2
         )
         audiodata = np.frombuffer(raw_data, dtype=np.int16, count=-1)
-        ds = Model(tensor_graph, N_FEATURES, N_CONTEXT, tensor_label, BEAM_WIDTH)
-        return ds.stt(audiodata, 16000)
-
+        
+        return self.ds.stt(audiodata, 16000)
 
 def get_flac_converter():
     """Returns the absolute path of a FLAC converter executable, or raises an OSError if none can be found."""
