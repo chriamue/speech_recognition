@@ -1207,7 +1207,7 @@ class Recognizer(AudioSource):
     def recognize_deepspeech(self, audio_data, tensor_graph='deepspeech-data/output_graph.pb', tensor_label='deepspeech-data/alphabet.txt'):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance).
-        Path to Tensor loaded from ``tensor_graph``. You can download a model here: http://download.tensorflow.org/models/speech_commands_v0.01.zip
+        Path to Tensor loaded from ``tensor_graph``. You can download a model here: https://github.com/mozilla/DeepSpeech/releases
         Path to Tensor Labels file loaded from ``tensor_label``.
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
@@ -1215,9 +1215,6 @@ class Recognizer(AudioSource):
         assert isinstance(tensor_label, str), "``tensor_label`` must be a string"
 
         BEAM_WIDTH = 500
-        LM_WEIGHT = 1.75
-        WORD_COUNT_WEIGHT = 1.00
-        VALID_WORD_COUNT_WEIGHT = 1.00
         N_FEATURES = 26
         N_CONTEXT = 9
 
