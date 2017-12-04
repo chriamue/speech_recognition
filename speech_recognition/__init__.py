@@ -1204,17 +1204,20 @@ class Recognizer(AudioSource):
     lastdsmodel = ''
     ds = None
 
-    def recognize_deepspeech(self, audio_data, tensor_graph='deepspeech-data/output_graph.pb', tensor_label='deepspeech-data/alphabet.txt'):
+    def recognize_deepspeech(self, audio_data, graph='deepspeech-data/output_graph.pb', alphabet='deepspeech-data/alphabet.txt', lm = None, trie = None):
         """
         Performs speech recognition on ``audio_data`` (an ``AudioData`` instance).
         Path to Tensor loaded from ``tensor_graph``. You can download a model here: https://github.com/mozilla/DeepSpeech/releases
         Path to Tensor Labels file loaded from ``tensor_label``.
         """
         assert isinstance(audio_data, AudioData), "Data must be audio data"
-        assert isinstance(tensor_graph, str), "``tensor_graph`` must be a string"
-        assert isinstance(tensor_label, str), "``tensor_label`` must be a string"
+        assert isinstance(graph, str), "``tensor_graph`` must be a string"
+        assert isinstance(alphabet, str), "``tensor_label`` must be a string"
 
         BEAM_WIDTH = 500
+        LM_WEIGHT = 1.75
+        WORD_COUNT_WEIGHT = 1.00
+        VALID_WORD_COUNT_WEIGHT = 0.90
         N_FEATURES = 26
         N_CONTEXT = 9
 
@@ -1224,9 +1227,12 @@ class Recognizer(AudioSource):
         except ImportError:
             raise RequestError("missing deepspeech module: ensure that deepspeech is set up correctly.")
 
-        if not (tensor_graph == self.lastdsmodel):
-            self.lastdsmodel = tensor_graph
-            self.ds = Model(tensor_graph, N_FEATURES, N_CONTEXT, tensor_label, BEAM_WIDTH)
+        if not (graph == self.lastdsmodel):
+            self.lastdsmodel = graph
+            self.ds = Model(graph, N_FEATURES, N_CONTEXT, alphabet, BEAM_WIDTH)
+            if lm and trie:
+                self.ds.enableDecoderWithLM(alphabet, lm, trie, LM_WEIGHT,
+                                    WORD_COUNT_WEIGHT, VALID_WORD_COUNT_WEIGHT)
 
         raw_data = audio_data.get_raw_data(
             convert_rate=16000, convert_width=2
